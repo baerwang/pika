@@ -14,64 +14,47 @@ jobs:
     strategy:
       matrix:
         include:
-          - arch: x86_64-unknown-linux-gnu
-            os: ubuntu-latest
+          - os: ubuntu-latest
+            image: amd64/ubuntu:latest
             file_name: ${{ github.event.repository.name }}-${{ github.ref_name }}-linux-amd64
             file_ext: .tar.gz
-          - arch: aarch64-unknown-linux-gnu
-            os: ubuntu-latest
+          - os: ubuntu-latest
+            image: arm64v8/ubuntu:latest
             file_name: ${{ github.event.repository.name }}-${{ github.ref_name }}-linux-arm64
             file_ext: .tar.gz
-          - arch: x86_64-apple-darwin
-            os: macos-latest
-            file_name: ${{ github.event.repository.name }}-${{ github.ref_name }}-darwin-amd64
+#          - os: macos-latest
+#            image: macos-latest
+#            file_name: ${{ github.event.repository.name }}-${{ github.ref_name }}-darwin-amd64
+#            file_ext: .tar.gz
+          - os: ubuntu-latest
+            image: amd64/centos:7
+            file_name: ${{ github.event.repository.name }}-${{ github.ref_name }}-centos8-amd64
             file_ext: .tar.gz
-          - arch: aarch64-apple-darwin
-            os: macos-latest
-            file_name: ${{ github.event.repository.name }}-${{ github.ref_name }}-darwin-arm64
+          - os: ubuntu-latest
+            image: arm64v8/centos:7
+            file_name: ${{ github.event.repository.name }}-${{ github.ref_name }}-centos7-arm64
+            file_ext: .tar.gz
+          - os: ubuntu-latest
+            image: amd64/centos:8
+            file_name: ${{ github.event.repository.name }}-${{ github.ref_name }}-centos8-amd64
+            file_ext: .tar.gz
+          - os: ubuntu-latest
+            image: arm64v8/centos:8
+            file_name: ${{ github.event.repository.name }}-${{ github.ref_name }}-centos8-arm64
             file_ext: .tar.gz
 
     runs-on: ${{ matrix.os }}
+    container:
+      image: ${{ matrix.image }}
 
     steps:
       - name: Checkout sources
         uses: actions/checkout@v4
 
-      - name: Install Deps - linux
-        if: contains(matrix.arch, 'linux')
+      - name: Release build os - ${{ matrix.os }}
         run: |
-          sudo apt-get install -y autoconf libprotobuf-dev protobuf-compiler
-          sudo apt-get install -y clang-tidy-12
-
-      - name: Install Deps - darwin
-        if: contains(matrix.os, 'macos')
-        run: |
-          brew update
-          brew install --overwrite python@3.12 autoconf protobuf llvm wget git
-          brew install gcc@10 automake cmake make binutils
-
-      - name: Configure CMake - linux
-        if: contains(matrix.arch, 'linux')
-        run: cmake -B build -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DUSE_PIKA_TOOLS=ON -DCMAKE_CXX_FLAGS="-s" -DCMAKE_EXE_LINKER_FLAGS="-s"
-
-      - name: Configure CMake - darwin
-        if: contains(matrix.os, 'macos')
-        run: |
-          export CC=/usr/local/opt/gcc@10/bin/gcc-10 
-          cmake -B build -DCMAKE_C_COMPILER=/usr/local/opt/gcc@10/bin/gcc-10 -DUSE_PIKA_TOOLS=ON -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
-
-      - name: Cache Build - linux
-        if: contains(matrix.arch, 'linux')
-        uses: actions/cache@v3
-        id: cache-ubuntu
-        with:
-          key: ${{ runner.os }}-build-ubuntu-${{ hashFiles('**/CMakeLists.txt') }}
-          path: |
-            ${{ github.workspace }}/buildtrees
-            ${{ github.workspace }}/deps
-
-      - name: Build
-        run: cmake --build build --config ${{ env.BUILD_TYPE }}
+          chmod +x ci/release-build.sh
+          ./ci/release-build.sh ${{ matrix.os }} ${{ env.BUILD_TYPE }} -xe
 
       - name: Calculate checksum and rename binary
         shell: bash
