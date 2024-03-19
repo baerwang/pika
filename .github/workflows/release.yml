@@ -31,20 +31,12 @@ jobs:
             file_name: ${{ github.event.repository.name }}-${{ github.ref_name }}-darwin-arm64
             file_ext: .tar.gz
           - arch: x86_64-unknown-linux-gnu
-            os: centos:7
-            file_name: ${{ github.event.repository.name }}-${{ github.ref_name }}-centos7-amd64
-            file_ext: .tar.gz
-          - arch: aarch64-unknown-linux-gnu
-            os: centos:7
-            file_name: ${{ github.event.repository.name }}-${{ github.ref_name }}-centos7-arm64
-            file_ext: .tar.gz
-          - arch: x86_64-unknown-linux-gnu
-            os: centos:8
+            os: main-centos
             file_name: ${{ github.event.repository.name }}-${{ github.ref_name }}-centos8-amd64
             file_ext: .tar.gz
           - arch: aarch64-unknown-linux-gnu
-            os: centos:8
-            file_name: ${{ github.event.repository.name }}-${{ github.ref_name }}-centos8-arm64
+            os: main-centos
+            file_name: ${{ github.event.repository.name }}-${{ github.ref_name }}-centos7-arm64
             file_ext: .tar.gz
 
     runs-on: ${{ matrix.os }}
